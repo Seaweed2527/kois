@@ -17,13 +17,6 @@ $dgw = $q2[0];
 $tgw = $q2[1];
 echo "jam alat : $dgw || $tgw<br>";
 
-$awal  = ("$dgw $tgw");
-$akhir = date("Y-m-d H:i:s");
-$selisih   = datediff($awal, $akhir);
-// echo " selisih :$selisih menit<br>";
-$delay  = $selisih['Secon_total'] / 3600;
-$delay  = round($delay, 1);
-echo " selisih notif:$delay jam<br>";
 
 function datediff($awal, $akhir)
 {
@@ -32,6 +25,13 @@ function datediff($awal, $akhir)
 	$diff_secs = abs($awal - $akhir);
 	return array("Secon_total" => floor($diff_secs));
 }
+
+$awal  = ("$dgw $tgw");
+$akhir = date("Y-m-d H:i:s");
+$selisih   = datediff($awal, $akhir);
+$delay  = $selisih['Secon_total'] / 3600;
+$delay  = round($delay, 1);
+echo " selisih notif:$delay jam<br>";
 
 
 $query = mysqli_query($link, "SELECT thd_ph1, thd_ph2, thd_tds1, thd_tds2, thd_ox1, thd_ox2, thd_sn1, thd_sn2 from plant_user where sn ='2021040001' order by no desc ");
@@ -74,101 +74,341 @@ echo "Suhu nutrisi saat ini : $sunut<br>";
 
 $fieldsList = [];
 
+
+//date
+$e = date("H:i:s");
+$jame = explode(':', $e);
+$jam_end = $jame[0];
+
+$fieldsList = [];
+
+$date = date("Y-m-d");
 //notif alat mati
 if ($delay > 1) {
+	$b = mysqli_query($link, "SELECT tgl, pkl, tipe from notif where sn ='2021040001' and hour(pkl)='$jam_end' and tgl = '$date' and tipe = 'alat' order by no desc limit 1");
+	$bb = mysqli_fetch_row($b);
 
-	mysqli_query($link, " insert into dami(id, selisih) values ('2021', '$delay')");
-	// prep the bundle
-	$msg = array(
-		'message' 	=> 'Please check your device and your wireless connection !!!',
-		'title'		=> 'Warning !!!',
-		'vibrate'	=> 1,
-		'sound'		=> 1,
-		'largeIcon'	=> 'large_icon',
-		'smallIcon'	=> 'small_icon'
-	);
-	$fields = array(
-		'to'  => '/topics/systempakren',
-		'data'	=> $msg
-	);
-	$fieldsList[] = $fields;
-}
+	if (empty($bb)) {
+		// prep the bundle
+		mysqli_query($link, "insert into notif(sn, tgl, pkl, tipe, ket) values ('2021040001','$date', '$e', 'alat', 'Alat mati yo!')");
+		$msg = array(
+			'message' 	=> 'Please check your device and your wireless connection !!!',
+			'title'		=> 'Warning !!!',
+			'vibrate'	=> 1,
+			'sound'		=> 1,
+			'largeIcon'	=> 'large_icon',
+			'smallIcon'	=> 'small_icon'
+		);
+		$fields = array(
+			'to'  => '/topics/systempakren',
+			'data'	=> $msg
+		);
+		$fieldsList[] = $fields;
+	} else {
+		$a = mysqli_query($link, "SELECT tgl, pkl, tipe FROM notif WHERE sn='2021040001' and tipe='alat' ORDER BY no DESC limit 1");
+		$a2 = mysqli_fetch_row($a);
+		$tgl = $a2[0];
+		$pkl = $a2[1];
+		$tipe = $a2[2];
 
+		echo "<br> $tgl | $pkl | $tipe<br>";
+
+		function datediffe($awal_a, $akhir_a)
+		{
+			$awal_a = strtotime($awal_a);
+			$akhir_a = strtotime($akhir_a);
+			$diff_secs_a = abs($awal_a - $akhir_a);
+			return array("Secon_total" => floor($diff_secs_a));
+		}
+		//monik
+		$awal_a  = ("$tgl $pkl");
+		$akhir_a = date("Y-m-d H:i:s");
+		$selisih_a = datediffe($awal_a, $akhir_a);
+		$delay_a  = $selisih_a['Secon_total'] / 60;
+		$delay_a  = round($delay_a, 1);
+		echo "selisih notif1111 : $delay_a menit<br>";
+
+		if ($delay_a >= 720) {
+			mysqli_query($link, "insert into notif(sn, tgl, pkl, tipe, ket) values ('2021040001','$date', '$akhir', 'alat', 'Alat mati yo!')");
+
+			$msg = array(
+				'message' 	=> 'Please check your device and your wireless connection !!!',
+				'title'		=> 'Warning !!!',
+				'vibrate'	=> 1,
+				'sound'		=> 1,
+				'largeIcon'	=> 'large_icon',
+				'smallIcon'	=> 'small_icon'
+			);
+			$fields = array(
+				'to'  => '/topics/systempakren',
+				'data'	=> $msg
+			);
+			$fieldsList[] = $fields;
+		};
+	};
+};
+
+echo "$pH | $thd_ph2 || $pH | $thd_ph1";
 //notif pH lebih dari thd
 if ($pH > $thd_ph2 || $pH < $thd_ph1) {
-	mysqli_query($link, " insert into dami(id) values ('2021', '$pH')");
-	$msg = array(
-		'message' 	=> 'Current pH : ' . $pH,
-		'title'		=> 'Warning !!!',
-		'vibrate'	=> 1,
-		'sound'		=> 1,
-		'largeIcon'	=> 'large_icon',
-		'smallIcon'	=> 'small_icon'
-	);
-	$fields = array(
-		'to'  => '/topics/pHpakrenald',
-		'data'	=> $msg
-	);
-	$fieldsList[] = $fields;
-}
+	$c = mysqli_query($link, "SELECT tgl, pkl, tipe from notif where sn ='2021040001' and hour(pkl)='$jam_end' and tgl = '$date' and tipe = 'pH' order by no desc limit 1");
+	$cc = mysqli_fetch_row($c);
 
+	if (empty($cc)) {
+		mysqli_query($link, "insert into notif(sn, tgl, pkl, tipe, ket) values ('2021040001','$date', '$e', 'pH', 'pH is abnormal')");
+		$msg = array(
+			'message' 	=> 'Current pH : ' . $pH,
+			'title'		=> 'Warning !!!',
+			'vibrate'	=> 1,
+			'sound'		=> 1,
+			'largeIcon'	=> 'large_icon',
+			'smallIcon'	=> 'small_icon'
+		);
+		$fields = array(
+			'to'  => '/topics/pHpakrenald',
+			'data'	=> $msg
+		);
+		$fieldsList[] = $fields;
+	} else {
+		$b = mysqli_query($link, "SELECT tgl, pkl, tipe FROM notif WHERE sn='2021040001' and tipe='pH' ORDER BY no DESC limit 1");
+		$b2 = mysqli_fetch_row($b);
+		$tgl = $b2[0];
+		$pkl = $b2[1];
+		$tipe = $b2[2];
 
+		echo "<br> $tgl | $pkl | $tipe<br>";
+
+		function datediffee($awal_aa, $akhir_aa)
+		{
+			$awal_aa = strtotime($awal_aa);
+			$akhir_aa = strtotime($akhir_aa);
+			$diff_secs_aa = abs($awal_aa - $akhir_aa);
+			return array("Secon_total" => floor($diff_secs_aa));
+		}
+		//monik
+		$awal_aa  = ("$tgl $pkl");
+		$akhir_aa = date("Y-m-d H:i:s");
+		$selisih_aa  = datediffee($awal_aa, $akhir_aa);
+		$delay_aa  = $selisih_aa['Secon_total'] / 60;
+		$delay_aa  = round($delay_aa, 1);
+		echo "selisih notif2222 : $delay_aa menit<br>";
+
+		if ($delay_aa >= 720) {
+			mysqli_query($link, "insert into notif(sn, tgl, pkl, tipe, ket) values ('2021040001','$date', '$akhir', 'pH', 'pH is abnormal!')");
+			$msg = array(
+				'message' 	=> 'Current pH : ' . $pH,
+				'title'		=> 'Warning !!!',
+				'vibrate'	=> 1,
+				'sound'		=> 1,
+				'largeIcon'	=> 'large_icon',
+				'smallIcon'	=> 'small_icon'
+			);
+			$fields = array(
+				'to'  => '/topics/pHpakrenald',
+				'data'	=> $msg
+			);
+			$fieldsList[] = $fields;
+		};
+	};
+};
+
+echo "$TDS | $thd_tds2 || $TDS | $thd_tds1";
 //notif TDS lebih dari thd
 if ($TDS > $thd_tds2 || $TDS < $thd_tds1) {
-	mysqli_query($link, " insert into dami(id) values ('2021', '$TDS')");
-	// prep the bundle
-	$msg = array(
-		'message' 	=> 'Current TDS :' . $TDS,
-		'title'		=> 'Warning !!!',
-		'vibrate'	=> 1,
-		'sound'		=> 1,
-		'largeIcon'	=> 'large_icon',
-		'smallIcon'	=> 'small_icon'
-	);
-	$fields = array(
-		'to'  => '/topics/TDSpakrenald',
-		'data'	=> $msg
-	);
-	$fieldsList[] = $fields;
-}
+	$d = mysqli_query($link, "SELECT tgl, pkl, tipe from notif where sn ='2021040001' and hour(pkl)='$jam_end' and tgl = '$date' and tipe = 'TDS' order by no desc limit 1");
+	$dd = mysqli_fetch_row($d);
+
+	if (empty($dd)) {
+		mysqli_query($link, "insert into notif(sn, tgl, pkl, tipe, ket) values ('2021040001','$date', '$e', 'TDS', 'TDS is abnormal')");
+		// prep the bundle
+		$msg = array(
+			'message' 	=> 'Current TDS :' . $TDS,
+			'title'		=> 'Warning !!!',
+			'vibrate'	=> 1,
+			'sound'		=> 1,
+			'largeIcon'	=> 'large_icon',
+			'smallIcon'	=> 'small_icon'
+		);
+		$fields = array(
+			'to'  => '/topics/TDSpakrenald',
+			'data'	=> $msg
+		);
+		$fieldsList[] = $fields;
+	} else {
+		$c = mysqli_query($link, "SELECT tgl, pkl, tipe FROM notif WHERE sn='2021040001' and tipe='TDS' ORDER BY no DESC limit 1");
+		$c2 = mysqli_fetch_row($c);
+		$tgl = $c2[0];
+		$pkl = $c2[1];
+		$tipe = $c2[2];
+
+		echo "<br> $tgl | $pkl | $tipe<br>";
+
+		function datediff2($awal_b, $akhir_b)
+		{
+			$awal_b = strtotime($awal_b);
+			$akhir_b = strtotime($akhir_b);
+			$diff_secs_b = abs($awal_b - $akhir_b);
+			return array("Secon_total" => floor($diff_secs_b));
+		}
+		//monik
+		$awal_b  = ("$tgl $pkl");
+		$akhir_b = date("Y-m-d H:i:s");
+		$selisih_b  = datediff2($awal_b, $akhir_b);
+		$delay_b  = $selisih_b['Secon_total'] / 60;
+		$delay_b  = round($delay_b, 1);
+		echo "selisih notif333 : $delay_b menit<br>";
+
+		if ($delay_b >= 720) {
+			mysqli_query($link, "insert into notif(sn, tgl, pkl, tipe, ket) values ('2021040001','$date', '$akhir', 'TDS', 'TDS is abnormal!')");
+			$msg = array(
+				'message' 	=> 'Current TDS :' . $TDS,
+				'title'		=> 'Warning !!!',
+				'vibrate'	=> 1,
+				'sound'		=> 1,
+				'largeIcon'	=> 'large_icon',
+				'smallIcon'	=> 'small_icon'
+			);
+			$fields = array(
+				'to'  => '/topics/TDSpakrenald',
+				'data'	=> $msg
+			);
+			$fieldsList[] = $fields;
+		};
+	};
+};
 
 
 //notif Oksigen kurang dari thd
+echo "$DO | $thd_ox2 || $DO | $thd_ox1";
+
 if ($DO > $thd_ox2 || $DO < $thd_ox1) {
-	mysqli_query($link, " insert into dami(id) values ('2021', '$DO')");
-	// prep the bundle
-	$msg = array(
-		'message' 	=> 'Current oxygen level :' . $DO,
-		'title'		=> 'Warning !!!',
-		'vibrate'	=> 1,
-		'sound'		=> 1,
-		'largeIcon'	=> 'large_icon',
-		'smallIcon'	=> 'small_icon'
-	);
-	$fields = array(
-		'to'  => '/topics/oksigenpakrenald',
-		'data'	=> $msg
-	);
-	$fieldsList[] = $fields;
-}
+	$n = mysqli_query($link, "SELECT tgl, pkl, tipe from notif where sn ='2021040001' and hour(pkl)='$jam_end' and tgl = '$date' and tipe = 'oksigen' order by no desc limit 1");
+	$nn = mysqli_fetch_row($n);
+
+	if (empty($nn)) {
+		// prep the bundle
+		mysqli_query($link, "insert into notif(sn, tgl, pkl, tipe, ket) values ('2021040001','$date', '$e', 'oksigen', 'Oxygen Level is abnormal')");
+		$msg = array(
+			'message' 	=> 'Current oxygen level :' . $DO,
+			'title'		=> 'Warning !!!',
+			'vibrate'	=> 1,
+			'sound'		=> 1,
+			'largeIcon'	=> 'large_icon',
+			'smallIcon'	=> 'small_icon'
+		);
+		$fields = array(
+			'to'  => '/topics/oksigenpakrenald',
+			'data'	=> $msg
+		);
+		$fieldsList[] = $fields;
+	} else {
+		$d = mysqli_query($link, "SELECT tgl, pkl, tipe FROM notif WHERE sn='2021040001' and tipe='oksigen' ORDER BY no DESC limit 1");
+		$d2 = mysqli_fetch_row($d);
+		$tgl = $d2[0];
+		$pkl = $d2[1];
+		$tipe = $d2[2];
+
+		echo "<br> $tgl | $pkl | $tipe<br>";
+
+		function datediff3($awal_x, $akhir_x)
+		{
+			$awal_x = strtotime($awal_x);
+			$akhir_x = strtotime($akhir_x);
+			$diff_secs_x = abs($awal_x - $akhir_x);
+			return array("Secon_total" => floor($diff_secs_x));
+		}
+		//monik
+		$awal_x  = ("$tgl $pkl");
+		$akhir_x = date("Y-m-d H:i:s");
+		$selisih_x  = datediff3($awal_x, $akhir_x);
+		$delay_x  = $selisih_x['Secon_total'] / 60;
+		$delay_x  = round($delay_x, 1);
+		echo "selisih notif444 : $delay_x menit<br>";
+
+		if ($delay_x >= 720) {
+			mysqli_query($link, "insert into notif(sn, tgl, pkl, tipe, ket) values ('2021040001','$date', '$akhir', 'oksigen', 'Oxygen level is abnormal!')");
+			$msg = array(
+				'message' 	=> 'Current oxygen level :' . $DO,
+				'title'		=> 'Warning !!!',
+				'vibrate'	=> 1,
+				'sound'		=> 1,
+				'largeIcon'	=> 'large_icon',
+				'smallIcon'	=> 'small_icon'
+			);
+			$fields = array(
+				'to'  => '/topics/oksigenpakrenald',
+				'data'	=> $msg
+			);
+			$fieldsList[] = $fields;
+		};
+	};
+};
 
 //notif Suhu Nutrisi lebih dari thd
+echo "$Sn | $thd_sn2 || $Sn | $thd_sn1";
+
 if ($sunut > $thd_sn2 || $sunut < $thd_sn1) {
-	mysqli_query($link, " insert into dami(id) values ('2021')");
+	$f = mysqli_query($link, "SELECT tgl, pkl, tipe from notif where sn ='2021040001' and hour(pkl)='$jam_end' and tgl = '$date' and tipe = 'Sn' order by no desc limit 1");
+	$ff = mysqli_fetch_row($f);
+
 	// prep the bundle
-	$msg = array(
-		'message' 	=> 'Current Water Temperature :' . $sunut,
-		'title'		=> 'Warning !!!',
-		'vibrate'	=> 1,
-		'sound'		=> 1,
-		'largeIcon'	=> 'large_icon',
-		'smallIcon'	=> 'small_icon'
-	);
-	$fields = array(
-		'to'  => '/topics/nutrisikoipakrenald',
-		'data'	=> $msg
-	);
-	$fieldsList[] = $fields;
+	if (empty($ff)) {
+		mysqli_query($link, "insert into notif(sn, tgl, pkl, tipe, ket) values ('2021040001','$date', '$e', 'Sn', 'Water Temperature is abnormal')");
+		$msg = array(
+			'message' 	=> 'Current Water Temperature :' . $sunut,
+			'title'		=> 'Warning !!!',
+			'vibrate'	=> 1,
+			'sound'		=> 1,
+			'largeIcon'	=> 'large_icon',
+			'smallIcon'	=> 'small_icon'
+		);
+		$fields = array(
+			'to'  => '/topics/nutrisikoipakrenald',
+			'data'	=> $msg
+		);
+		$fieldsList[] = $fields;
+	} else {
+		$z = mysqli_query($link, "SELECT tgl, pkl, tipe FROM notif WHERE sn='2021040001' and tipe='Sn' ORDER BY no DESC limit 1");
+		$z2 = mysqli_fetch_row($z);
+		$tgl = $z2[0];
+		$pkl = $z2[1];
+		$tipe = $z2[2];
+
+		echo "<br> $tgl | $pkl | $tipe<br>";
+
+		function datediff4($awal_z, $akhir_z)
+		{
+			$awal_z = strtotime($awal_z);
+			$akhir_z = strtotime($akhir_z);
+			$diff_secs_z = abs($awal_z - $akhir_z);
+			return array("Secon_total" => floor($diff_secs_z));
+		}
+		//monik
+		$awal_z  = ("$tgl $pkl");
+		$akhir_z = date("Y-m-d H:i:s");
+		$selisih_z  = datediff4($awal_z, $akhir_z);
+		$delay_z  = $selisih_z['Secon_total'] / 60;
+		$delay_z  = round($delay_z, 1);
+		echo "selisih notif555 : $delay_z menit<br>";
+
+		if ($delay_z >= 720) {
+			mysqli_query($link, "insert into notif(sn, tgl, pkl, tipe, ket) values ('2021040001','$date', '$akhir', 'Sn', 'Water Temperature is abnormal'");
+			// prep the bundle
+			$msg = array(
+				'message' 	=> 'Current Water Temperature :' . $Sn,
+				'title'		=> 'Warning !!!',
+				'vibrate'	=> 1,
+				'sound'		=> 1,
+				'largeIcon'	=> 'large_icon',
+				'smallIcon'	=> 'small_icon'
+			);
+			$fields = array(
+				'to'  => '/topics/nutrisikoipakrenald',
+				'data'	=> $msg
+			);
+			$fieldsList[] = $fields;
+		};
+	};
 }
 
 for ($i = 0; $i < count($fieldsList); $i++) {
