@@ -341,7 +341,7 @@ if ($DO > $thd_ox2 || $DO < $thd_ox1) {
 };
 
 //notif Suhu Nutrisi lebih dari thd
-echo "$Sn | $thd_sn2 || $Sn | $thd_sn1";
+echo "$sunut | $thd_sn2 || $sunut | $thd_sn1";
 
 if ($sunut > $thd_sn2 || $sunut < $thd_sn1) {
 	$f = mysqli_query($link, "SELECT tgl, pkl, tipe from notif where sn ='2021040001' and hour(pkl)='$jam_end' and tgl = '$date' and tipe = 'Sn' order by no desc limit 1");
