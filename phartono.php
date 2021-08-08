@@ -300,11 +300,11 @@ if ($DO > $thd_ox2 || $DO < $thd_ox1) {
 		);
 		$fieldsList[] = $fields;
 	} else {
-		$d = mysqli_query($link, "SELECT tgl, pkl, tipe FROM notif WHERE sn='2021070002' and tipe='oksigen' ORDER BY no DESC limit 1");
-		$d2 = mysqli_fetch_row($d);
-		$tgl = $d2[0];
-		$pkl = $d2[1];
-		$tipe = $d2[2];
+		$o = mysqli_query($link, "SELECT tgl, pkl, tipe FROM notif WHERE sn='2021070002' and tipe='oksigen' ORDER BY no DESC limit 1");
+		$o2 = mysqli_fetch_row($o);
+		$tgl = $o2[0];
+		$pkl = $o2[1];
+		$tipe = $o2[2];
 
 		echo "<br> $tgl | $pkl | $tipe<br>";
 
