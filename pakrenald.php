@@ -72,10 +72,6 @@ $q7 = mysqli_fetch_row($query6);
 $sunut = $q7[0];
 echo "Suhu nutrisi saat ini : $sunut<br>";
 
-$fieldsList = [];
-
-
-//date
 $e = date("H:i:s");
 $jame = explode(':', $e);
 $jam_end = $jame[0];
